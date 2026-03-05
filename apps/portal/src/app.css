@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+:root {
+  --portal-primary: #1f93ff;
+  --portal-text: #1b2836;
+  --portal-text-light: #6e7c87;
+  --portal-bg: #f9fafb;
+}

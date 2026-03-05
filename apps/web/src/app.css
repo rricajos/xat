@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-primary: #1f93ff;
+  --color-primary-dark: #1070cc;
+  --color-woot: #1f93ff;
+  --color-sidebar-bg: #f8f9fb;
+  --color-sidebar-active: #e8f2ff;
+  --color-sidebar-text: #3c4858;
+  --color-header-bg: #ffffff;
+  --color-border: #e8e8e8;
+}
+
+.dark {
+  --color-sidebar-bg: #1e293b;
+  --color-sidebar-active: #1e3a5f;
+  --color-sidebar-text: #cbd5e1;
+  --color-header-bg: #0f172a;
+  --color-border: #334155;
+}

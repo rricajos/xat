@@ -1,0 +1,39 @@
+{
+  "name": "xat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "db:generate": "turbo run db:generate --filter=@xat/db",
+    "db:migrate": "turbo run db:migrate --filter=@xat/db",
+    "db:seed": "turbo run db:seed --filter=@xat/db",
+    "db:studio": "turbo run db:studio --filter=@xat/db",
+    "start": "pnpm --filter @xat/web start",
+    "worker": "pnpm --filter @xat/web worker"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "prettier-plugin-svelte": "^3.5.1",
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bullmq": "^5.70.2",
+    "ioredis": "^5.10.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "ioredis": "^5.10.0"
+    }
+  }
+}
