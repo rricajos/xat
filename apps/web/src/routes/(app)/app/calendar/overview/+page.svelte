@@ -493,9 +493,7 @@
                   data-event
                   onmouseenter={() => (hoveringEvent = true)}
                   onmouseleave={() => (hoveringEvent = false)}
-                  onclick|stopPropagation={() => {
-                    selected = { type: "booking", item: booking };
-                  }}
+                  onclick={(e) => { e.stopPropagation(); selected = { type: "booking", item: booking }; }}
                   class="absolute left-0.5 right-0.5 overflow-hidden rounded-md border border-white/20 px-1.5 py-0.5 text-left text-white transition-opacity hover:opacity-90
                     {STATUS_BG[booking.status] ?? 'bg-blue-600 border-blue-700'}
                     {selected?.type === 'booking' && selected.item.id === booking.id ? 'ring-2 ring-white/60 ring-offset-1' : ''}"
@@ -512,9 +510,7 @@
                   data-event
                   onmouseenter={() => (hoveringEvent = true)}
                   onmouseleave={() => (hoveringEvent = false)}
-                  onclick|stopPropagation={() => {
-                    selected = { type: "blocked", item: block };
-                  }}
+                  onclick={(e) => { e.stopPropagation(); selected = { type: "blocked", item: block }; }}
                   class="absolute left-0.5 right-0.5 overflow-hidden rounded-md border border-gray-300 bg-gray-100 px-1.5 py-0.5 text-left transition-opacity hover:opacity-90 dark:border-gray-600 dark:bg-gray-700
                     {selected?.type === 'blocked' && selected.item.id === block.id ? 'ring-2 ring-gray-400 ring-offset-1' : ''}"
                   style="top: {eventTop(block.startAt)}px; height: {eventHeight(block.startAt, block.endAt)}px; min-height: 20px"
