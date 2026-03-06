@@ -1,6 +1,7 @@
 import { db } from "@xat/db";
 import { csatSurveyResponses } from "@xat/db/schema";
-import { eq, and, gte, lte, count, avg, sql, desc } from "drizzle-orm";
+import { eq, and, gte, lte, count, avg, isNotNull, desc } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 
 export async function createSurveyResponse(params: {
   accountId: number;
@@ -16,6 +17,51 @@ export async function createSurveyResponse(params: {
     .values(params)
     .returning();
   return response;
+}
+
+// Create a pending survey (no rating yet) and return the token for email link
+export async function createPendingSurvey(params: {
+  accountId: number;
+  conversationId: number;
+  contactId: number;
+  assignedAgentId?: number;
+}) {
+  // Check if a survey already exists for this conversation
+  const [existing] = await db
+    .select({ id: csatSurveyResponses.id })
+    .from(csatSurveyResponses)
+    .where(eq(csatSurveyResponses.conversationId, params.conversationId))
+    .limit(1);
+  if (existing) return null;
+
+  const token = randomBytes(32).toString("hex");
+  const [survey] = await db
+    .insert(csatSurveyResponses)
+    .values({ ...params, token, surveyEmailSentAt: new Date() })
+    .returning();
+  return survey;
+}
+
+export async function getSurveyByToken(token: string) {
+  const [survey] = await db
+    .select()
+    .from(csatSurveyResponses)
+    .where(eq(csatSurveyResponses.token, token))
+    .limit(1);
+  return survey ?? null;
+}
+
+export async function submitSurveyByToken(
+  token: string,
+  rating: number,
+  feedbackText?: string,
+) {
+  const [updated] = await db
+    .update(csatSurveyResponses)
+    .set({ rating, feedbackText: feedbackText ?? null, updatedAt: new Date() })
+    .where(and(eq(csatSurveyResponses.token, token)))
+    .returning();
+  return updated ?? null;
 }
 
 export async function getSurveyResponse(
@@ -48,17 +94,15 @@ export async function listSurveyResponses(
   const { page = 1, limit = 25 } = options;
   const offset = (page - 1) * limit;
 
-  const conditions = [eq(csatSurveyResponses.accountId, accountId)];
+  // Only return surveys that have been submitted (rating is not null)
+  const conditions = [
+    eq(csatSurveyResponses.accountId, accountId),
+    isNotNull(csatSurveyResponses.rating),
+  ];
 
-  if (options.since) {
-    conditions.push(gte(csatSurveyResponses.createdAt, options.since));
-  }
-  if (options.until) {
-    conditions.push(lte(csatSurveyResponses.createdAt, options.until));
-  }
-  if (options.agentId) {
-    conditions.push(eq(csatSurveyResponses.assignedAgentId, options.agentId));
-  }
+  if (options.since) conditions.push(gte(csatSurveyResponses.createdAt, options.since));
+  if (options.until) conditions.push(lte(csatSurveyResponses.createdAt, options.until));
+  if (options.agentId) conditions.push(eq(csatSurveyResponses.assignedAgentId, options.agentId));
 
   const where = and(...conditions);
 
@@ -85,6 +129,7 @@ export async function getCsatMetrics(
 ) {
   const conditions = [
     eq(csatSurveyResponses.accountId, accountId),
+    isNotNull(csatSurveyResponses.rating),
     gte(csatSurveyResponses.createdAt, since),
     lte(csatSurveyResponses.createdAt, until),
   ];
@@ -99,22 +144,17 @@ export async function getCsatMetrics(
     .from(csatSurveyResponses)
     .where(where);
 
-  // Rating distribution
   const distribution = await db
-    .select({
-      rating: csatSurveyResponses.rating,
-      count: count(),
-    })
+    .select({ rating: csatSurveyResponses.rating, count: count() })
     .from(csatSurveyResponses)
     .where(where)
     .groupBy(csatSurveyResponses.rating);
 
   const ratingMap: Record<number, number> = {};
   for (const d of distribution) {
-    ratingMap[d.rating] = d.count;
+    if (d.rating !== null) ratingMap[d.rating] = d.count;
   }
 
-  // Satisfaction score: percentage of ratings >= 4
   const satisfied = (ratingMap[4] ?? 0) + (ratingMap[5] ?? 0);
   const total = metrics?.totalResponses ?? 0;
   const satisfactionScore = total > 0 ? Math.round((satisfied / total) * 100) : null;

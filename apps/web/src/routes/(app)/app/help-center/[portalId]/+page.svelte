@@ -10,7 +10,7 @@
 </script>
 
 <div class="h-full overflow-y-auto bg-white dark:bg-gray-950">
-  <div class="mx-auto max-w-4xl p-6">
+  <div class="max-w-6xl p-6">
     <!-- Header -->
     <div class="mb-6">
       <a href="/app/help-center" class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-1 border-b border-gray-200 dark:border-gray-700 mb-6">
+    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
       {#each [
         { id: "articles" as const, label: `Articles (${data.articles.length})` },
         { id: "categories" as const, label: `Categories (${data.categories.length})` },

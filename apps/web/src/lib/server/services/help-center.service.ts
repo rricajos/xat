@@ -220,6 +220,81 @@ export async function deleteArticle(accountId: number, articleId: number) {
   return deleted;
 }
 
+export async function getPortalByCustomDomain(domain: string) {
+  const [portal] = await db
+    .select()
+    .from(portals)
+    .where(eq(portals.customDomain, domain))
+    .limit(1);
+  return portal ?? null;
+}
+
+export async function listArticlesByLocale(
+  portalId: number,
+  locale: string,
+  options: { categoryId?: number } = {},
+) {
+  const conditions = [
+    eq(articles.portalId, portalId),
+    eq(articles.status, "published"),
+  ];
+
+  if (options.categoryId) {
+    conditions.push(eq(articles.categoryId, options.categoryId));
+  }
+
+  // Filter categories by locale, then get articles in those categories
+  const localeCategories = await db
+    .select()
+    .from(categories)
+    .where(
+      and(eq(categories.portalId, portalId), eq(categories.locale, locale)),
+    );
+
+  if (localeCategories.length === 0) {
+    return [];
+  }
+
+  const categoryIds = localeCategories.map((c) => c.id);
+
+  const allArticles = await db
+    .select()
+    .from(articles)
+    .where(and(...conditions))
+    .orderBy(desc(articles.updatedAt));
+
+  // Filter by locale categories
+  return allArticles.filter(
+    (a) => a.categoryId && categoryIds.includes(a.categoryId),
+  );
+}
+
+export async function listCategoriesByLocale(
+  portalId: number,
+  locale: string,
+) {
+  return db
+    .select()
+    .from(categories)
+    .where(
+      and(eq(categories.portalId, portalId), eq(categories.locale, locale)),
+    )
+    .orderBy(categories.position);
+}
+
+export async function getAvailableLocales(portalId: number): Promise<string[]> {
+  const cats = await db
+    .select({ locale: categories.locale })
+    .from(categories)
+    .where(eq(categories.portalId, portalId));
+
+  const locales = new Set(
+    cats.map((c) => c.locale).filter((l): l is string => !!l),
+  );
+
+  return Array.from(locales).sort();
+}
+
 export async function getPublishedArticle(portalId: number, slug: string) {
   const [article] = await db
     .select()

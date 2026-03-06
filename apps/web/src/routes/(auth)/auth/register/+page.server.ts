@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, cookies }) => {
+  default: async ({ request, cookies, getClientAddress }) => {
     const formData = await request.formData();
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
@@ -78,7 +78,14 @@ export const actions: Actions = {
       role: "owner",
     });
 
-    const sessionId = await createSession(user!.id, account!.id);
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? getClientAddress();
+    const userAgent = request.headers.get("user-agent") ?? undefined;
+
+    const sessionId = await createSession(user!.id, account!.id, {
+      ipAddress,
+      userAgent,
+    });
     setSessionCookie(cookies, sessionId);
 
     redirect(302, "/app");

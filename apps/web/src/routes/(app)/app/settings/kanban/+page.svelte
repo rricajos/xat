@@ -118,23 +118,20 @@
   </div>
 
   <!-- Board selector tabs -->
-  <div class="mb-6 flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
+  <div class="mb-6 flex border-b border-gray-200 dark:border-gray-700">
     {#each data.boards as board}
       <button
         onclick={() => selectBoard(board.id)}
-        class="relative px-4 py-2.5 text-sm font-medium transition-colors {data.activeBoard?.id === board.id
-          ? 'text-blue-600 dark:text-blue-400'
-          : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
+        class="border-b-2 -mb-px px-4 py-2 text-sm font-medium transition-colors {data.activeBoard?.id === board.id
+          ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+          : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}"
       >
         {board.name}
-        {#if data.activeBoard?.id === board.id}
-          <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"></span>
-        {/if}
       </button>
     {/each}
     <button
       onclick={() => (showCreateBoard = !showCreateBoard)}
-      class="ml-1 flex items-center gap-1 px-3 py-2.5 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      class="ml-1 flex items-center gap-1 px-3 py-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
     >
       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />

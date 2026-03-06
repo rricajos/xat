@@ -39,11 +39,28 @@ const emailWorker = new Worker(
       auth: { user: smtpUser, pass: smtpPass },
     });
 
+    let htmlBody = body;
+
+    if (type === "send_csat_survey") {
+      // `body` contains the survey token; build a nice HTML email
+      const appUrl = process.env.PUBLIC_APP_URL ?? "http://localhost:3000";
+      const surveyUrl = `${appUrl}/csat/${body}`;
+      htmlBody = `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+          <h2 style="color:#1e293b">How was your support experience?</h2>
+          <p style="color:#475569">Please rate your experience so we can keep improving.</p>
+          <div style="display:flex;gap:8px;margin:24px 0">
+            ${[1,2,3,4,5].map(r => `<a href="${surveyUrl}?rating=${r}" style="display:inline-block;width:48px;height:48px;line-height:48px;text-align:center;border-radius:50%;background:#f1f5f9;color:#334155;font-size:18px;text-decoration:none;border:2px solid #e2e8f0">${["😡","😞","😐","😊","😍"][r-1]}</a>`).join("")}
+          </div>
+          <p style="color:#94a3b8;font-size:13px">Or <a href="${surveyUrl}" style="color:#3b82f6">leave detailed feedback</a></p>
+        </div>`;
+    }
+
     await transporter.sendMail({
       from: smtpFrom,
       to,
       subject,
-      html: body,
+      html: htmlBody,
     });
 
     console.log(`[email:${type}] Sent to ${to}`);
@@ -144,12 +161,43 @@ const channelWorker = new Worker(
   { connection: createConnection(), concurrency: 3 },
 );
 
+// IMAP Worker — polls email inboxes on schedule
+const imapWorker = new Worker(
+  "imap",
+  async () => {
+    console.log("[imap] Polling all IMAP mailboxes");
+    const { pollAllMailboxes } = await import("./imap-worker.js");
+    const count = await pollAllMailboxes();
+    if (count > 0) {
+      console.log(`[imap] Total emails processed: ${count}`);
+    }
+  },
+  { connection: createConnection(), concurrency: 1 },
+);
+
+// Push Notification Worker
+const pushWorker = new Worker(
+  "push",
+  async (job: Job) => {
+    const { userId, title, body, icon, url, tag } = job.data;
+    console.log(`[push] Sending push to user ${userId}: ${title}`);
+
+    const { sendPushNotification } = await import(
+      "../services/push-notification.service.js"
+    );
+    await sendPushNotification(userId, { title, body, icon, url, tag });
+  },
+  { connection: createConnection(), concurrency: 5 },
+);
+
 // Error handlers
 for (const worker of [
   emailWorker,
   webhookWorker,
   automationWorker,
   channelWorker,
+  imapWorker,
+  pushWorker,
 ]) {
   worker.on("failed", (job, err) => {
     console.error(
@@ -162,6 +210,6 @@ for (const worker of [
   });
 }
 
-export { emailWorker, webhookWorker, automationWorker, channelWorker };
+export { emailWorker, webhookWorker, automationWorker, channelWorker, imapWorker, pushWorker };
 
 console.log("[worker] All workers started");

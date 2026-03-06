@@ -293,20 +293,20 @@
     <!-- Reply Box -->
     <div class="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
       <!-- Reply / Private Note tabs -->
-      <div class="flex border-b border-gray-100 dark:border-gray-800">
+      <div class="flex border-b border-gray-200 dark:border-gray-700">
         <button
           onclick={() => isPrivateNote = false}
           class="px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors {!isPrivateNote
-            ? 'border-blue-600 text-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}"
+            ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}"
         >
           Reply
         </button>
         <button
           onclick={() => isPrivateNote = true}
           class="px-4 py-2 text-xs font-medium border-b-2 -mb-px transition-colors {isPrivateNote
-            ? 'border-yellow-500 text-yellow-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}"
+            ? 'border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-500'
+            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}"
         >
           Private Note
         </button>
@@ -504,6 +504,10 @@
   {#if showContactPanel && data.contact}
     <ContactPanel
       contact={data.contact}
+      conversationId={data.conversation.id}
+      conversationCustomAttributes={(data.conversation.customAttributes ?? {}) as Record<string, unknown>}
+      conversationAttrDefs={data.conversationAttrDefs}
+      contactAttrDefs={data.contactAttrDefs}
       conversationLabels={data.conversationLabels}
       previousConversations={data.previousConversations}
     />

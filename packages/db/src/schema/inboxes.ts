@@ -81,6 +81,7 @@ export const channelEmail = pgTable("channel_email", {
   smtpLogin: varchar("smtp_login", { length: 255 }),
   smtpPassword: varchar("smtp_password", { length: 255 }),
   smtpEnableSslTls: boolean("smtp_enable_ssl_tls").default(true),
+  emailSignature: text("email_signature"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -147,6 +148,75 @@ export const channelApi = pgTable("channel_api", {
     .references(() => accounts.id, { onDelete: "cascade" }),
   webhookUrl: text("webhook_url"),
   hmacToken: varchar("hmac_token", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const channelInstagram = pgTable("channel_instagram", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  pageId: varchar("page_id", { length: 255 }).notNull(),
+  pageAccessToken: text("page_access_token").notNull(),
+  instagramId: varchar("instagram_id", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const channelTwitter = pgTable("channel_twitter", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  apiKey: varchar("api_key", { length: 255 }).notNull(),
+  apiSecret: varchar("api_secret", { length: 255 }).notNull(),
+  accessToken: text("access_token").notNull(),
+  accessTokenSecret: text("access_token_secret").notNull(),
+  twitterAccountId: varchar("twitter_account_id", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const channelLine = pgTable("channel_line", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  channelAccessToken: text("channel_access_token").notNull(),
+  channelSecret: varchar("channel_secret", { length: 255 }).notNull(),
+  lineChannelId: varchar("line_channel_id", { length: 255 }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const channelSms = pgTable("channel_sms", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  providerType: varchar("provider_type", { length: 20 })
+    .default("twilio")
+    .notNull(),
+  accountSid: varchar("account_sid", { length: 255 }).notNull(),
+  authToken: varchar("auth_token", { length: 255 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -7,6 +7,7 @@ import {
   smallint,
   timestamp,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { accounts } from "./accounts";
 import { conversations } from "./conversations";
@@ -29,8 +30,10 @@ export const csatSurveyResponses = pgTable(
       .notNull()
       .references(() => contacts.id),
     assignedAgentId: integer("assigned_agent_id").references(() => users.id),
-    rating: smallint("rating").notNull(), // 1-5
+    rating: smallint("rating"), // 1-5, nullable until customer submits
     feedbackText: text("feedback_text"),
+    token: varchar("token", { length: 64 }).unique(),
+    surveyEmailSentAt: timestamp("survey_email_sent_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -40,9 +43,7 @@ export const csatSurveyResponses = pgTable(
   },
   (table) => [
     index("csat_account_created_idx").on(table.accountId, table.createdAt),
-    index("csat_account_agent_idx").on(
-      table.accountId,
-      table.assignedAgentId,
-    ),
+    index("csat_account_agent_idx").on(table.accountId, table.assignedAgentId),
+    uniqueIndex("csat_token_idx").on(table.token),
   ],
 );

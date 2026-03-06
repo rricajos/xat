@@ -5,11 +5,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const page = parseInt(url.searchParams.get("page") ?? "1");
   const search = url.searchParams.get("search") ?? undefined;
 
-  const result = await listContacts(locals.account!.id, {
-    page,
-    search,
-    limit: 25,
-  });
+  const result = await listContacts(locals.account!.id, { page, search, limit: 25 });
 
   return {
     contacts: result.data,

@@ -55,7 +55,7 @@ export const channelQueue = new Queue("channel", {
 
 // Job type definitions
 export interface EmailJobData {
-  type: "send_reply" | "send_notification" | "send_transcript";
+  type: "send_reply" | "send_notification" | "send_transcript" | "send_csat_survey";
   to: string;
   subject: string;
   body: string;
@@ -100,4 +100,50 @@ export async function enqueueAutomation(data: AutomationJobData) {
 
 export async function enqueueChannelSync(data: ChannelJobData) {
   return channelQueue.add("channel", data);
+}
+
+// IMAP polling queue (repeatable)
+export const imapQueue = new Queue("imap", {
+  connection: getConnection(),
+  defaultJobOptions: {
+    attempts: 1,
+    removeOnComplete: 10,
+    removeOnFail: 50,
+  },
+});
+
+// Push notification queue
+export const pushQueue = new Queue("push", {
+  connection: getConnection(),
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 1000 },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  },
+});
+
+export interface PushJobData {
+  userId: number;
+  title: string;
+  body: string;
+  icon?: string;
+  url?: string;
+  tag?: string;
+}
+
+export async function enqueuePush(data: PushJobData) {
+  return pushQueue.add("push", data);
+}
+
+// Schedule IMAP polling every 2 minutes
+export async function scheduleImapPolling() {
+  await imapQueue.add(
+    "poll",
+    {},
+    {
+      repeat: { every: 120_000 },
+      jobId: "imap-poll",
+    },
+  );
 }

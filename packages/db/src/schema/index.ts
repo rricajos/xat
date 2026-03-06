@@ -2,7 +2,7 @@
 export { accounts } from "./accounts";
 export { users } from "./users";
 export { accountUsers } from "./account-users";
-export { sessions } from "./sessions";
+export { sessions, usernameRedirects } from "./sessions";
 
 // Phase 1 — Conversations Core
 export {
@@ -13,17 +13,21 @@ export {
   channelTelegram,
   channelFacebook,
   channelApi,
+  channelInstagram,
+  channelTwitter,
+  channelLine,
+  channelSms,
 } from "./inboxes";
 export { contacts, companies } from "./contacts";
 export { conversations } from "./conversations";
-export { messages, attachments } from "./messages";
+export { messages, attachments, messageReactions } from "./messages";
 export { contactInboxes } from "./contact-inboxes";
 
 // Phase 2 — Collaboration & Organization
 export { labels, labelTaggings } from "./labels";
 export { teams, teamMembers } from "./teams";
 export { cannedResponses } from "./canned-responses";
-export { notifications } from "./notifications";
+export { notifications, notificationPreferences } from "./notifications";
 export {
   conversationParticipants,
   mentions,
@@ -47,7 +51,14 @@ export { campaigns } from "./campaigns";
 export { portals, categories, articles } from "./help-center";
 
 // Phase 8 — Integrations
-export { webhooks, integrations, agentBots } from "./integrations";
+export {
+  webhooks,
+  integrations,
+  agentBots,
+  apiTokens,
+  videoCalls,
+  dashboardApps,
+} from "./integrations";
 
 // CSAT
 export { csatSurveyResponses } from "./csat";
@@ -65,3 +76,19 @@ export {
   tickets,
   ticketConversations,
 } from "./tickets";
+
+// Phase 18+ — Workflows, Push, Slack Channel
+export {
+  conversationWorkflows,
+  pushSubscriptions,
+  channelSlack,
+} from "./workflows";
+
+// Phase 30+ — Calendar
+export {
+  calendarEventTypes,
+  calendarSchedules,
+  calendarBookings,
+  calendarBlockedTimes,
+  calendarExternalConns,
+} from "./calendars";

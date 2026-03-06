@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Sidebar from "$lib/components/layout/Sidebar.svelte";
+  import ResizablePanel from "$lib/components/layout/ResizablePanel.svelte";
   import CommandBar from "$lib/components/layout/CommandBar.svelte";
   import KeyboardShortcutsHelp from "$lib/components/layout/KeyboardShortcutsHelp.svelte";
   import { initKeyboardShortcuts } from "$lib/stores/keyboard-shortcuts";
@@ -32,7 +33,9 @@
 ></button>
 
 <div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-  <Sidebar user={data.user} account={data.account} labels={data.labels} inboxes={data.inboxes} onOpenCommandBar={() => (commandBarOpen = true)} />
+  <ResizablePanel defaultWidth={224} minWidth={180} maxWidth={320} storageKey="panel:sidebar">
+    <Sidebar user={data.user} account={data.account} labels={data.labels} inboxes={data.inboxes} onOpenCommandBar={() => (commandBarOpen = true)} />
+  </ResizablePanel>
   <main class="flex flex-1 flex-col overflow-hidden">
     {@render children()}
   </main>

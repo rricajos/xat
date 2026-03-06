@@ -6,6 +6,7 @@
 # --- Stage 1: Base ---
 FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+RUN apk add --no-cache curl
 WORKDIR /app
 
 # --- Stage 2: Dependencies ---
@@ -29,7 +30,7 @@ RUN pnpm --filter @xat/db build && \
 
 # --- Stage 4: Production ---
 FROM node:20-alpine AS production
-RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
+RUN apk add --no-cache curl tini
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -43,10 +44,21 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/db/dist ./packages/db/dist
 COPY --from=build /app/packages/shared/dist ./packages/shared/dist
 
-# Create uploads directory
-RUN mkdir -p /app/uploads
+# Create non-root user and uploads directory
+RUN addgroup -g 1001 -S xat && \
+    adduser -S xat -u 1001 && \
+    mkdir -p /app/uploads && \
+    chown -R xat:xat /app
+
+USER xat
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Use tini as init process for proper signal handling
+ENTRYPOINT ["tini", "--"]
 
 # Default: run the web server. Override CMD for worker.
 CMD ["node", "server.js"]

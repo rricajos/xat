@@ -4,6 +4,7 @@ import {
   varchar,
   text,
   smallint,
+  boolean,
   jsonb,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -18,6 +19,9 @@ export const users = pgTable("users", {
   availability: smallint("availability").default(0),
   uiSettings: jsonb("ui_settings").default({}),
   type: varchar("type", { length: 20 }).default("user").notNull(),
+  calendarUsername: varchar("calendar_username", { length: 50 }).unique(),
+  twoFactorSecret: varchar("two_factor_secret", { length: 255 }),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

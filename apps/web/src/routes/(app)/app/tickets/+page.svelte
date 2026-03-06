@@ -1,12 +1,11 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { invalidateAll } from "$app/navigation";
   import * as m from "$lib/paraglide/messages";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  let showCreateBoard = $state(false);
   let showCreateTicket = $state<number | null>(null);
   let newTicketTitle = $state("");
   let dragTicketId = $state<number | null>(null);
@@ -66,72 +65,18 @@
 <div class="flex h-full flex-col overflow-hidden">
   <!-- Header -->
   <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-900">
-    <div class="flex items-center gap-3">
-      <h1 class="text-lg font-semibold text-gray-900 dark:text-white">{m.tickets_title()}</h1>
-
-      <!-- Board tabs -->
-      {#if data.boards.length > 0}
-        <div class="flex items-center gap-1 rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800">
-          {#each data.boards as board}
-            <a
-              href="/app/tickets?board={board.id}"
-              class="rounded-md px-3 py-1 text-xs font-medium transition-colors {data.activeBoard?.id === board.id ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'}"
-            >
-              {board.name}
-            </a>
-          {/each}
-        </div>
-      {/if}
-    </div>
-
-    <div class="flex items-center gap-2">
-      {#if data.activeBoard}
-        <a
-          href="/app/settings/kanban?board={data.activeBoard.id}"
-          class="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
-        >
-          {m.kanban_settings()}
-        </a>
-      {/if}
-      <button
-        onclick={() => (showCreateBoard = !showCreateBoard)}
-        class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+    <h1 class="text-base font-semibold text-gray-900 dark:text-white">
+      {data.activeBoard?.name ?? m.tickets_title()}
+    </h1>
+    {#if data.activeBoard}
+      <a
+        href="/app/settings/kanban?board={data.activeBoard.id}"
+        class="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800"
       >
-        {m.kanban_new_board()}
-      </button>
-    </div>
+        {m.kanban_settings()}
+      </a>
+    {/if}
   </div>
-
-  <!-- Create board form -->
-  {#if showCreateBoard}
-    <div class="border-b border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800">
-      <form
-        method="POST"
-        action="?/createBoard"
-        use:enhance={() => {
-          return async ({ update }) => {
-            await update();
-            showCreateBoard = false;
-          };
-        }}
-        class="flex items-center gap-3"
-      >
-        <input
-          name="name"
-          type="text"
-          required
-          placeholder="Board name..."
-          class="flex-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-        />
-        <button type="submit" class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
-          {m.btn_create()}
-        </button>
-        <button type="button" onclick={() => (showCreateBoard = false)} class="text-xs text-gray-500 hover:text-gray-700">
-          {m.btn_cancel()}
-        </button>
-      </form>
-    </div>
-  {/if}
 
   <!-- Kanban board -->
   {#if data.activeBoard && data.stages.length > 0}
@@ -261,12 +206,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
         </svg>
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{m.kanban_no_boards()}</p>
-        <button
-          onclick={() => (showCreateBoard = true)}
-          class="mt-3 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          {m.kanban_new_board()}
-        </button>
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Use the + button in the sidebar to create a board</p>
       </div>
     </div>
   {/if}

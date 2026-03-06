@@ -24,6 +24,11 @@ export const EVENTS = {
 
   // Presence events
   AGENT_STATUS_CHANGED: "agent:status_changed",
+
+  // Calendar/Booking events
+  BOOKING_CREATED: "booking:created",
+  BOOKING_CANCELLED: "booking:cancelled",
+  BOOKING_STATUS_UPDATED: "booking:status_updated",
 } as const;
 
 export function broadcastConversationCreated(
@@ -79,4 +84,63 @@ export function broadcastNotification(
   notification: unknown,
 ) {
   emitToAgent(userId, EVENTS.NOTIFICATION_CREATED, notification);
+}
+
+export function broadcastTypingStart(
+  accountId: number,
+  conversationId: number,
+  userId: number,
+  userName: string,
+  isPrivate: boolean,
+) {
+  emitToConversation(conversationId, EVENTS.TYPING_START, {
+    conversationId,
+    userId,
+    userName,
+    isPrivate,
+  });
+}
+
+export function broadcastTypingStop(
+  accountId: number,
+  conversationId: number,
+  userId: number,
+) {
+  emitToConversation(conversationId, EVENTS.TYPING_STOP, {
+    conversationId,
+    userId,
+  });
+}
+
+export function broadcastAgentStatusChanged(
+  accountId: number,
+  userId: number,
+  availability: number,
+) {
+  emitToAccount(accountId, EVENTS.AGENT_STATUS_CHANGED, {
+    userId,
+    availability,
+  });
+}
+
+export function broadcastContactUpdated(
+  accountId: number,
+  contact: unknown,
+) {
+  emitToAccount(accountId, EVENTS.CONTACT_UPDATED, contact);
+}
+
+export function broadcastConversationUpdated(
+  accountId: number,
+  conversation: unknown,
+) {
+  emitToAccount(accountId, EVENTS.CONVERSATION_UPDATED, conversation);
+}
+
+export function broadcastToAccount(
+  accountId: number,
+  event: string,
+  data: unknown,
+) {
+  emitToAccount(accountId, event, data);
 }

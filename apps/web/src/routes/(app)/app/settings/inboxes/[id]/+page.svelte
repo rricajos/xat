@@ -230,4 +230,25 @@
       >
     </div>
   </form>
+
+  <!-- Email Signature (email inboxes only) -->
+  {#if data.inbox.channelType === "Channel::Email" && data.emailChannel !== null}
+    <div class="mt-8 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <h3 class="mb-1 text-sm font-semibold text-gray-900 dark:text-white">Email Signature</h3>
+      <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">This signature will be appended to outgoing emails from this inbox.</p>
+      <form method="POST" action="?/updateSignature" use:enhance class="space-y-3">
+        <textarea
+          name="emailSignature"
+          rows="4"
+          placeholder="Best regards,&#10;The Support Team"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        >{data.emailChannel.emailSignature ?? ""}</textarea>
+        <div class="flex justify-end">
+          <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+            Save Signature
+          </button>
+        </div>
+      </form>
+    </div>
+  {/if}
 </div>

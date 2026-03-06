@@ -1,12 +1,16 @@
 /**
- * Standalone BullMQ worker process.
- * Run separately from the web server to process background jobs.
+ * Xat Background Worker
+ * Processes BullMQ jobs: emails, webhooks, automation rules, channels
  *
  * Usage: node worker.js
  */
-
+import "dotenv/config";
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
+
+console.log("[worker] Starting Xat background worker...");
+console.log(`[worker] NODE_ENV: ${process.env.NODE_ENV ?? "development"}`);
+console.log(`[worker] Redis: ${process.env.REDIS_URL ?? "redis://localhost:6379"}`);
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 

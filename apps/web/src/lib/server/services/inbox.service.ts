@@ -4,7 +4,13 @@ import {
   channelWebWidgets,
   channelEmail,
   channelWhatsapp,
+  channelTelegram,
   channelApi,
+  channelInstagram,
+  channelTwitter,
+  channelLine,
+  channelSms,
+  channelSlack,
 } from "@xat/db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
@@ -137,6 +143,32 @@ export async function createWhatsAppInbox(params: {
   return { inbox: inbox!, channel: channel! };
 }
 
+export async function createTelegramInbox(params: {
+  accountId: number;
+  name: string;
+  botToken: string;
+}) {
+  const [channel] = await db
+    .insert(channelTelegram)
+    .values({
+      accountId: params.accountId,
+      botToken: params.botToken,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "telegram",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
 export async function createApiInbox(params: {
   accountId: number;
   name: string;
@@ -159,6 +191,164 @@ export async function createApiInbox(params: {
       accountId: params.accountId,
       name: params.name,
       channelType: "api",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
+export async function createInstagramInbox(params: {
+  accountId: number;
+  name: string;
+  pageId: string;
+  pageAccessToken: string;
+  instagramId?: string;
+}) {
+  const [channel] = await db
+    .insert(channelInstagram)
+    .values({
+      accountId: params.accountId,
+      pageId: params.pageId,
+      pageAccessToken: params.pageAccessToken,
+      instagramId: params.instagramId,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "instagram",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
+export async function createTwitterInbox(params: {
+  accountId: number;
+  name: string;
+  apiKey: string;
+  apiSecret: string;
+  accessToken: string;
+  accessTokenSecret: string;
+  twitterAccountId?: string;
+}) {
+  const [channel] = await db
+    .insert(channelTwitter)
+    .values({
+      accountId: params.accountId,
+      apiKey: params.apiKey,
+      apiSecret: params.apiSecret,
+      accessToken: params.accessToken,
+      accessTokenSecret: params.accessTokenSecret,
+      twitterAccountId: params.twitterAccountId,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "twitter",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
+export async function createLineInbox(params: {
+  accountId: number;
+  name: string;
+  channelAccessToken: string;
+  channelSecret: string;
+  lineChannelId?: string;
+}) {
+  const [channel] = await db
+    .insert(channelLine)
+    .values({
+      accountId: params.accountId,
+      channelAccessToken: params.channelAccessToken,
+      channelSecret: params.channelSecret,
+      lineChannelId: params.lineChannelId,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "line",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
+export async function createSmsInbox(params: {
+  accountId: number;
+  name: string;
+  phoneNumber: string;
+  accountSid: string;
+  authToken: string;
+}) {
+  const [channel] = await db
+    .insert(channelSms)
+    .values({
+      accountId: params.accountId,
+      phoneNumber: params.phoneNumber,
+      accountSid: params.accountSid,
+      authToken: params.authToken,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "sms",
+      channelId: channel!.id,
+    })
+    .returning();
+
+  return { inbox: inbox!, channel: channel! };
+}
+
+export async function createSlackInbox(params: {
+  accountId: number;
+  name: string;
+  slackTeamId: string;
+  slackChannelId: string;
+  botToken: string;
+  botUserId?: string;
+  slackTeamName?: string;
+}) {
+  const [channel] = await db
+    .insert(channelSlack)
+    .values({
+      accountId: params.accountId,
+      slackTeamId: params.slackTeamId,
+      slackChannelId: params.slackChannelId,
+      botToken: params.botToken,
+      botUserId: params.botUserId,
+      slackTeamName: params.slackTeamName,
+    })
+    .returning();
+
+  const [inbox] = await db
+    .insert(inboxes)
+    .values({
+      accountId: params.accountId,
+      name: params.name,
+      channelType: "slack",
       channelId: channel!.id,
     })
     .returning();

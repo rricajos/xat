@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { verify } from "@xat/db/utils/password";
 import { createSession, setSessionCookie } from "$lib/server/auth";
 import { loginSchema } from "@xat/shared";
+import { verifyTotpCode } from "$lib/server/services/two-factor.service.js";
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (locals.user) {
@@ -14,7 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, cookies }) => {
+  default: async ({ request, cookies, getClientAddress }) => {
     const formData = await request.formData();
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -42,6 +43,17 @@ export const actions: Actions = {
       return fail(401, { error: "Invalid email or password", email });
     }
 
+    // Check 2FA if enabled
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      const totpCode = (formData.get("totpCode") as string ?? "").trim();
+      if (!totpCode) {
+        return fail(200, { requiresTwoFactor: true, email });
+      }
+      if (!verifyTotpCode(user.twoFactorSecret, totpCode)) {
+        return fail(401, { error: "Invalid authenticator code", email, requiresTwoFactor: true });
+      }
+    }
+
     // Get user's first account
     const [accountUser] = await db
       .select()
@@ -53,7 +65,14 @@ export const actions: Actions = {
       return fail(403, { error: "No account found for this user", email });
     }
 
-    const sessionId = await createSession(user.id, accountUser.accountId);
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? getClientAddress();
+    const userAgent = request.headers.get("user-agent") ?? undefined;
+
+    const sessionId = await createSession(user.id, accountUser.accountId, {
+      ipAddress,
+      userAgent,
+    });
     setSessionCookie(cookies, sessionId);
 
     redirect(302, "/app");

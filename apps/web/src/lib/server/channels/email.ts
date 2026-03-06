@@ -133,31 +133,40 @@ export async function sendOutboundEmail(params: {
     .limit(1);
 
   if (!emailConfig?.smtpEnabled) {
-    // TODO: Implement SMTP sending via nodemailer
-    console.log("[Email Channel] SMTP sending not yet implemented", {
-      to: params.to,
-      subject: params.subject,
-    });
+    console.log("[Email Channel] SMTP not enabled for inbox", params.inboxId);
     return;
   }
 
-  // TODO: Use nodemailer with emailConfig SMTP settings
-  // const transporter = nodemailer.createTransport({
-  //   host: emailConfig.smtpAddress,
-  //   port: emailConfig.smtpPort,
-  //   secure: emailConfig.smtpEnableSslTls,
-  //   auth: { user: emailConfig.smtpLogin, pass: emailConfig.smtpPassword },
-  // });
-  //
-  // await transporter.sendMail({
-  //   from: emailConfig.email,
-  //   to: params.to,
-  //   subject: params.subject,
-  //   html: params.body,
-  //   inReplyTo: params.inReplyTo,
-  // });
+  if (!emailConfig.smtpAddress || !emailConfig.smtpLogin || !emailConfig.smtpPassword) {
+    console.log("[Email Channel] SMTP credentials incomplete for inbox", params.inboxId);
+    return;
+  }
 
-  console.log("[Email Channel] Would send email:", {
+  const nodemailer = await import("nodemailer");
+
+  const transporter = nodemailer.createTransport({
+    host: emailConfig.smtpAddress,
+    port: emailConfig.smtpPort ?? 587,
+    secure: emailConfig.smtpEnableSslTls ?? false,
+    auth: {
+      user: emailConfig.smtpLogin,
+      pass: emailConfig.smtpPassword,
+    },
+  });
+
+  const signature = emailConfig.emailSignature
+    ? `<br><br><hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0"><div style="color:#6b7280;font-size:13px">${emailConfig.emailSignature.replace(/\n/g, "<br>")}</div>`
+    : "";
+
+  await transporter.sendMail({
+    from: emailConfig.email,
+    to: params.to,
+    subject: params.subject,
+    html: params.body + signature,
+    ...(params.inReplyTo ? { inReplyTo: params.inReplyTo } : {}),
+  });
+
+  console.log("[Email Channel] Sent email:", {
     from: emailConfig.email,
     to: params.to,
     subject: params.subject,

@@ -95,12 +95,29 @@ export async function getOverviewReport(
     avgFrt = null;
   }
 
+  // Resolution time: average seconds from creation to resolution (status=1)
+  let avgResolutionTime: number | null = null;
+  try {
+    const rtResult = await db.execute<{ avg_rt: string | null }>(sql`
+      SELECT AVG(EXTRACT(EPOCH FROM (c.updated_at - c.created_at)))::numeric as avg_rt
+      FROM conversations c
+      WHERE c.account_id = ${accountId}
+        AND c.status = 1
+        AND c.updated_at >= ${since.toISOString()}
+        AND c.updated_at <= ${until.toISOString()}
+    `);
+    const rtRow = Array.isArray(rtResult) ? rtResult[0] : null;
+    avgResolutionTime = rtRow?.avg_rt ? Math.round(parseFloat(rtRow.avg_rt)) : null;
+  } catch {
+    avgResolutionTime = null;
+  }
+
   return {
     conversationsCount: convCount?.count ?? 0,
     incomingMessagesCount: incomingCount?.count ?? 0,
     outgoingMessagesCount: outgoingCount?.count ?? 0,
     firstResponseTime: avgFrt ? Math.round(avgFrt) : null,
-    resolutionTime: null, // TODO: calculate from status change history
+    resolutionTime: avgResolutionTime,
     resolutionCount: resolutions?.count ?? 0,
   };
 }

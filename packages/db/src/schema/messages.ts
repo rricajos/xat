@@ -10,9 +10,11 @@ import {
   timestamp,
   decimal,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { accounts } from "./accounts";
 import { conversations } from "./conversations";
+import { users } from "./users";
 
 export const messages = pgTable(
   "messages",
@@ -77,3 +79,30 @@ export const attachments = pgTable("attachments", {
     .defaultNow()
     .notNull(),
 });
+
+export const messageReactions = pgTable(
+  "message_reactions",
+  {
+    id: serial("id").primaryKey(),
+    accountId: integer("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    messageId: integer("message_id")
+      .notNull()
+      .references(() => messages.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    emoji: varchar("emoji", { length: 10 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("message_reactions_unique_idx").on(
+      table.messageId,
+      table.userId,
+      table.emoji,
+    ),
+  ],
+);

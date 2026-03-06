@@ -1,15 +1,43 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { enhance } from "$app/forms";
   import { goto } from "$app/navigation";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+
   let noteInput = $state("");
   let editMode = $state(false);
   let showMerge = $state(false);
   let mergeContactId = $state("");
   let merging = $state(false);
   let mergeError = $state<string | null>(null);
+
+  // Activity timeline
+  let activeTab = $state<"overview" | "timeline">("overview");
+
+  interface TimelineItem {
+    type: "conversation" | "note";
+    id: number;
+    createdAt: string;
+    data: Record<string, unknown>;
+  }
+
+  let timeline = $state<TimelineItem[]>([]);
+  let timelineLoading = $state(false);
+
+  async function loadTimeline() {
+    if (timeline.length > 0) return;
+    timelineLoading = true;
+    const res = await fetch(`/api/v1/contacts/${data.contact.id}/timeline`);
+    if (res.ok) {
+      const body = await res.json();
+      timeline = body.data ?? [];
+    }
+    timelineLoading = false;
+  }
+
+  const convStatusLabels: Record<number, string> = { 0: "Open", 1: "Resolved", 2: "Pending", 3: "Snoozed" };
 
   async function handleMerge() {
     const secondaryId = parseInt(mergeContactId);
@@ -93,7 +121,7 @@
 <div class="flex h-full">
   <!-- Main Content -->
   <div class="flex-1 overflow-y-auto">
-    <div class="mx-auto max-w-3xl p-6">
+    <div class="max-w-6xl p-6">
       <!-- Contact Header -->
       <div class="flex items-start gap-4 mb-8">
         <div class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xl font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
@@ -166,6 +194,76 @@
           </button>
         </form>
       {/if}
+
+      <!-- Tab switcher -->
+      <div class="mb-6 flex border-b border-gray-200 dark:border-gray-700">
+        <button
+          onclick={() => activeTab = "overview"}
+          class="border-b-2 -mb-px px-4 py-2 text-sm font-medium transition-colors {activeTab === 'overview'
+            ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}"
+        >
+          Overview
+        </button>
+        <button
+          onclick={() => { activeTab = 'timeline'; loadTimeline(); }}
+          class="border-b-2 -mb-px px-4 py-2 text-sm font-medium transition-colors {activeTab === 'timeline'
+            ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'}"
+        >
+          Activity Timeline
+        </button>
+      </div>
+
+      {#if activeTab === "timeline"}
+        {#if timelineLoading}
+          <p class="text-sm text-gray-400">Loading timeline…</p>
+        {:else if timeline.length === 0}
+          <p class="text-sm text-gray-400 text-center py-8">No activity recorded yet.</p>
+        {:else}
+          <ol class="relative border-l border-gray-200 dark:border-gray-700 ml-3 space-y-6">
+            {#each timeline as item}
+              <li class="ml-6">
+                <span class="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full {item.type === 'conversation' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-yellow-100 dark:bg-yellow-900/30'}">
+                  {#if item.type === "conversation"}
+                    <svg class="h-3 w-3 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  {:else}
+                    <svg class="h-3 w-3 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  {/if}
+                </span>
+                <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                  {#if item.type === "conversation"}
+                    <div class="flex items-center justify-between">
+                      <a href="/app/conversations/{item.data.id}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
+                        Conversation #{item.data.id}
+                      </a>
+                      <span class="text-xs text-gray-400">{convStatusLabels[item.data.status as number] ?? "Unknown"}</span>
+                    </div>
+                    {#if item.data.inboxName}
+                      <p class="mt-0.5 text-xs text-gray-500">{item.data.inboxName}</p>
+                    {/if}
+                    {#if item.data.lastMessage}
+                      <p class="mt-1 text-xs text-gray-600 line-clamp-2 dark:text-gray-300">{item.data.lastMessage}</p>
+                    {/if}
+                  {:else}
+                    <p class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{item.data.content}</p>
+                    {#if item.data.userName}
+                      <p class="mt-1 text-xs text-gray-400">by {item.data.userName}</p>
+                    {/if}
+                  {/if}
+                  <time class="mt-1 block text-[11px] text-gray-400">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </time>
+                </div>
+              </li>
+            {/each}
+          </ol>
+        {/if}
+      {:else}
 
       <!-- Previous Conversations -->
       <div class="mb-8">
@@ -252,6 +350,7 @@
           {/if}
         </div>
       </div>
+      {/if}
     </div>
   </div>
 

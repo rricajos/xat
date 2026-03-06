@@ -90,101 +90,117 @@
   }
 </script>
 
-<div class="border-b border-gray-200 px-3 py-2 dark:border-gray-800">
-  <div class="flex items-center gap-2 flex-wrap">
-    <select
-      bind:value={filterStatus}
-      onchange={applyFilters}
-      class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-    >
-      <option value="">All Status</option>
-      {#each statusOptions as opt}
-        <option value={opt.value}>{opt.label}</option>
-      {/each}
-    </select>
-
-    {#if inboxes.length > 0}
-      <select
-        bind:value={filterInbox}
-        onchange={applyFilters}
-        class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-      >
-        <option value="">All Inboxes</option>
-        {#each inboxes as inbox}
-          <option value={inbox.id}>{inbox.name}</option>
+<div class="border-b border-gray-100 dark:border-gray-800">
+  <!-- Filter pills row -->
+  <div class="flex items-center gap-1.5 px-3 py-2 flex-wrap">
+    <!-- Status filter -->
+    <div class="relative group/status">
+      <select bind:value={filterStatus} onchange={applyFilters}
+        class="appearance-none cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-medium pr-5 focus:outline-none transition-colors
+        {filterStatus
+          ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+          : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'}">
+        <option value="">Status</option>
+        {#each statusOptions as opt}
+          <option value={opt.value}>{opt.label}</option>
         {/each}
       </select>
+      <svg class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+
+    <!-- Inbox filter -->
+    {#if inboxes.length > 0}
+      <div class="relative">
+        <select bind:value={filterInbox} onchange={applyFilters}
+          class="appearance-none cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-medium pr-5 focus:outline-none transition-colors
+          {filterInbox
+            ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+            : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'}">
+          <option value="">Inbox</option>
+          {#each inboxes as inbox}
+            <option value={inbox.id}>{inbox.name}</option>
+          {/each}
+        </select>
+        <svg class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
     {/if}
 
-    <select
-      bind:value={filterAssignee}
-      onchange={applyFilters}
-      class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-    >
-      <option value="">All Agents</option>
-      <option value="mine">Mine</option>
-      <option value="unassigned">Unassigned</option>
-    </select>
+    <!-- Assignee filter -->
+    <div class="relative">
+      <select bind:value={filterAssignee} onchange={applyFilters}
+        class="appearance-none cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-medium pr-5 focus:outline-none transition-colors
+        {filterAssignee
+          ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+          : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'}">
+        <option value="">Agent</option>
+        <option value="mine">Mine</option>
+        <option value="unassigned">Unassigned</option>
+      </select>
+      <svg class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
 
-    {#if hasActiveFilters}
-      <button
-        onclick={clearFilters}
-        class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        title="Clear filters"
-      >
-        Clear
+    <!-- Clear + Save -->
+    <div class="ml-auto flex items-center gap-1">
+      {#if hasActiveFilters}
+        <button onclick={clearFilters}
+          class="flex items-center gap-0.5 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] text-gray-400 hover:border-red-300 hover:bg-red-50 hover:text-red-500 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-red-800 dark:hover:text-red-400 transition-colors"
+          title="Clear filters">
+          <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      {/if}
+      <button onclick={() => (showNewFilter = !showNewFilter)}
+        class="rounded-full border border-dashed border-gray-300 px-2 py-1 text-[11px] text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:border-gray-600 dark:hover:border-blue-600 dark:hover:text-blue-400 transition-colors"
+        title="Save as view">
+        + Save view
       </button>
-    {/if}
-
-    <button
-      onclick={() => (showNewFilter = !showNewFilter)}
-      class="ml-auto text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
-      title="Save current filter as custom view"
-    >
-      Save
-    </button>
+    </div>
   </div>
 
+  <!-- Save filter form -->
   {#if showNewFilter}
-    <div class="mt-2 flex gap-2">
-      <input
-        type="text"
-        bind:value={newFilterName}
-        placeholder="Filter name..."
-        class="flex-1 rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        onkeydown={(e) => { if (e.key === "Enter") saveFilter(); }}
-      />
-      <button
-        onclick={saveFilter}
-        class="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
-      >
+    <div class="flex gap-2 px-3 pb-2">
+      <input type="text" bind:value={newFilterName} placeholder="View name…"
+        class="flex-1 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        onkeydown={(e) => { if (e.key === "Enter") saveFilter(); if (e.key === "Escape") showNewFilter = false; }} />
+      <button onclick={saveFilter}
+        class="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700">
         Save
       </button>
     </div>
   {/if}
 
+  <!-- Saved views -->
   {#if customFilters.length > 0}
-    <div class="mt-2 space-y-0.5">
-      <p class="text-[10px] font-semibold uppercase text-gray-400">Saved Views</p>
-      {#each customFilters as filter}
-        <div class="flex items-center group">
-          <button
-            onclick={() => applyCustomFilter(filter)}
-            class="flex-1 rounded px-2 py-1 text-left text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
-          >
-            {filter.name}
-          </button>
-          <button
-            onclick={() => deleteCustomFilter(filter.id)}
-            class="hidden group-hover:block rounded p-0.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-            title="Delete view"
-          >
-            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      {/each}
+    <div class="border-t border-gray-100 dark:border-gray-800 px-3 py-1.5">
+      <p class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Saved Views</p>
+      <div class="space-y-0.5">
+        {#each customFilters as filter}
+          <div class="group flex items-center rounded-md hover:bg-gray-50 dark:hover:bg-gray-800/60">
+            <button onclick={() => applyCustomFilter(filter)}
+              class="flex flex-1 items-center gap-1.5 px-2 py-1.5 text-left text-xs text-gray-600 dark:text-gray-400">
+              <svg class="h-3 w-3 flex-shrink-0 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              {filter.name}
+            </button>
+            <button onclick={() => deleteCustomFilter(filter.id)}
+              class="mr-1 hidden rounded p-1 text-gray-300 hover:text-red-500 group-hover:block dark:text-gray-600 dark:hover:text-red-400"
+              title="Delete view">
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 </div>

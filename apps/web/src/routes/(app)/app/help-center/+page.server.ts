@@ -1,13 +1,11 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
-import {
-  listPortals,
-  createPortal,
-} from "$lib/server/services/help-center.service";
+import { createPortal } from "$lib/server/services/help-center.service";
 
-export const load: PageServerLoad = async ({ locals }) => {
-  const allPortals = await listPortals(locals.account!.id);
-  return { portals: allPortals };
+export const load: PageServerLoad = async ({ parent }) => {
+  // portals come from the layout server
+  await parent();
+  return {};
 };
 
 export const actions: Actions = {

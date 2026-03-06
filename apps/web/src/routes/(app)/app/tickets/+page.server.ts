@@ -1,7 +1,6 @@
 import type { PageServerLoad, Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
 import {
-  listBoards,
   createBoard,
   listStages,
   listTicketsByBoard,
@@ -10,9 +9,9 @@ import {
   deleteTicket,
 } from "$lib/server/services/ticket.service";
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url, parent }) => {
   const accountId = locals.account!.id;
-  const boards = await listBoards(accountId);
+  const { boards } = await parent();
 
   const boardIdParam = url.searchParams.get("board");
   const activeBoard = boardIdParam

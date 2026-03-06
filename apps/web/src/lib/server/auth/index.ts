@@ -1,6 +1,6 @@
 import { db } from "@xat/db";
 import { sessions, users, accountUsers, accounts } from "@xat/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import type { Cookies } from "@sveltejs/kit";
 
@@ -29,6 +29,7 @@ function generateSessionId(): string {
 export async function createSession(
   userId: number,
   accountId: number,
+  meta?: { ipAddress?: string; userAgent?: string },
 ): Promise<string> {
   const sessionId = generateSessionId();
   const expiresAt = new Date(
@@ -39,6 +40,8 @@ export async function createSession(
     id: sessionId,
     userId,
     activeAccountId: accountId,
+    ipAddress: meta?.ipAddress ?? null,
+    userAgent: meta?.userAgent ?? null,
     expiresAt,
   });
 
@@ -113,6 +116,55 @@ export async function validateSession(sessionId: string): Promise<{
 
 export async function invalidateSession(sessionId: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.id, sessionId));
+}
+
+export async function listUserSessions(userId: number) {
+  return db
+    .select({
+      id: sessions.id,
+      ipAddress: sessions.ipAddress,
+      userAgent: sessions.userAgent,
+      expiresAt: sessions.expiresAt,
+      createdAt: sessions.createdAt,
+    })
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.userId, userId),
+        gt(sessions.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(sessions.createdAt));
+}
+
+export async function revokeSession(
+  userId: number,
+  sessionId: string,
+): Promise<void> {
+  await db
+    .delete(sessions)
+    .where(
+      and(
+        eq(sessions.id, sessionId),
+        eq(sessions.userId, userId),
+      ),
+    );
+}
+
+export async function revokeAllOtherSessions(
+  userId: number,
+  currentSessionId: string,
+): Promise<void> {
+  const allSessions = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(eq(sessions.userId, userId));
+
+  for (const s of allSessions) {
+    if (s.id !== currentSessionId) {
+      await db.delete(sessions).where(eq(sessions.id, s.id));
+    }
+  }
 }
 
 export function setSessionCookie(cookies: Cookies, sessionId: string): void {

@@ -14,6 +14,8 @@ import {
   broadcastConversationAssigned,
   broadcastConversationCreated,
 } from "$lib/server/realtime/events";
+import { createPendingSurvey } from "./csat.service.js";
+import { enqueueEmail } from "../jobs/queue.js";
 
 export interface ConversationListItem {
   id: number;
@@ -294,6 +296,34 @@ export async function updateConversationStatus(
 
   if (updated) {
     broadcastConversationStatusChanged(accountId, conversationId, status);
+
+    // Trigger CSAT survey email when conversation is resolved (status = 1)
+    if (status === 1 && updated.contactId) {
+      const [contactRow] = await db
+        .select({ id: contacts.id, email: contacts.email })
+        .from(contacts)
+        .where(eq(contacts.id, updated.contactId))
+        .limit(1);
+
+      if (contactRow?.email) {
+        const survey = await createPendingSurvey({
+          accountId,
+          conversationId,
+          contactId: contactRow.id,
+          assignedAgentId: updated.assigneeId ?? undefined,
+        });
+        if (survey?.token) {
+          await enqueueEmail({
+            type: "send_csat_survey",
+            to: contactRow.email,
+            subject: "How was your support experience?",
+            body: survey.token, // worker uses this as the token to build the URL
+            accountId,
+            conversationId,
+          });
+        }
+      }
+    }
   }
 
   return updated;

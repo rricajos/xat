@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { MESSAGE_TYPE } from "@xat/shared";
 
   interface Attachment {
@@ -8,6 +9,12 @@
     fileName: string | null;
     mimeType: string | null;
     fileSize: number | null;
+  }
+
+  interface Reaction {
+    emoji: string;
+    count: number;
+    userIds: number[];
   }
 
   interface Props {
@@ -21,12 +28,50 @@
       createdAt: Date;
       attachments?: Attachment[];
     };
+    currentUserId?: number;
   }
 
-  let { message }: Props = $props();
+  let { message, currentUserId }: Props = $props();
+
+  const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+
+  let reactions = $state<Reaction[]>([]);
+  let showEmojiBar = $state(false);
+  let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  async function loadReactions() {
+    const res = await fetch(`/api/v1/messages/${message.id}/reactions`);
+    if (res.ok) {
+      const body = await res.json();
+      reactions = body.data ?? [];
+    }
+  }
+
+  async function toggleReaction(emoji: string) {
+    showEmojiBar = false;
+    const res = await fetch(`/api/v1/messages/${message.id}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji }),
+    });
+    if (res.ok) await loadReactions();
+  }
+
+  function onMouseEnter() {
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    showEmojiBar = true;
+  }
+
+  function onMouseLeave() {
+    hoverTimeout = setTimeout(() => { showEmojiBar = false; }, 400);
+  }
 
   const isOutgoing = $derived(message.messageType === MESSAGE_TYPE.OUTGOING);
   const isActivity = $derived(message.messageType === MESSAGE_TYPE.ACTIVITY);
+
+  onMount(() => {
+    if (message.messageType !== MESSAGE_TYPE.ACTIVITY) loadReactions();
+  });
   const isPrivate = $derived(message.private === true);
   const hasAttachments = $derived(
     message.attachments && message.attachments.length > 0,
@@ -60,7 +105,32 @@
     </span>
   </div>
 {:else}
-  <div class="flex {isOutgoing ? 'justify-end' : 'justify-start'}">
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="group relative flex {isOutgoing ? 'justify-end' : 'justify-start'}"
+    onmouseenter={onMouseEnter}
+    onmouseleave={onMouseLeave}
+  >
+    <!-- Reaction bar (appears on hover) -->
+    {#if showEmojiBar}
+      <div
+        class="absolute {isOutgoing ? 'right-0' : 'left-0'} -top-8 z-20 flex items-center gap-0.5 rounded-full border border-gray-200 bg-white px-1.5 py-1 shadow-md dark:border-gray-700 dark:bg-gray-800"
+        onmouseenter={onMouseEnter}
+        onmouseleave={onMouseLeave}
+      >
+        {#each QUICK_EMOJIS as emoji}
+          <button
+            type="button"
+            onclick={() => toggleReaction(emoji)}
+            class="rounded-full px-1 py-0.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-transform hover:scale-125"
+            title={emoji}
+          >
+            {emoji}
+          </button>
+        {/each}
+      </div>
+    {/if}
+
     <div
       class="max-w-[70%] rounded-lg px-4 py-2 {isPrivate
         ? 'bg-yellow-100 border border-yellow-300 dark:bg-yellow-900/30 dark:border-yellow-700'
@@ -128,5 +198,23 @@
         {formatTime(message.createdAt)}
       </span>
     </div>
+
+    <!-- Reaction pills (outside bubble, below) -->
+    {#if reactions.length > 0}
+      <div class="absolute -bottom-5 {isOutgoing ? 'right-0' : 'left-0'} flex gap-1">
+        {#each reactions as reaction}
+          <button
+            type="button"
+            onclick={() => toggleReaction(reaction.emoji)}
+            class="flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs transition-colors {currentUserId && reaction.userIds.includes(currentUserId)
+              ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/30'
+              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'}"
+          >
+            <span>{reaction.emoji}</span>
+            {#if reaction.count > 1}<span class="text-gray-500 dark:text-gray-400">{reaction.count}</span>{/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
   </div>
 {/if}

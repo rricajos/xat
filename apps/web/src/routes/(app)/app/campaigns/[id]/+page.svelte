@@ -53,7 +53,7 @@
 </script>
 
 <div class="h-full overflow-y-auto bg-white dark:bg-gray-950">
-  <div class="mx-auto max-w-3xl p-6">
+  <div class="max-w-6xl p-6">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <a href="/app/campaigns" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">

@@ -6,8 +6,8 @@
   let showForm = $state(false);
 </script>
 
-<div class="h-full overflow-y-auto bg-white">
-  <div class="mx-auto max-w-3xl p-6">
+<div class="h-full overflow-y-auto bg-white dark:bg-gray-950">
+  <div class="max-w-6xl p-6">
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-lg font-semibold text-gray-900">Help Center</h2>

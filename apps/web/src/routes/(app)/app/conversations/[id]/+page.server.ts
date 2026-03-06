@@ -13,7 +13,8 @@ import { getContact } from "$lib/server/services/contact.service";
 import { getLabelsForConversation } from "$lib/server/services/label.service";
 import { saveFile } from "$lib/server/services/storage.service";
 import { db } from "@xat/db";
-import { attachments } from "@xat/db/schema";
+import { attachments, customAttributeDefinitions } from "@xat/db/schema";
+import { eq } from "drizzle-orm";
 import { MESSAGE_TYPE } from "@xat/shared";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -23,11 +24,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   const conversation = await getConversation(locals.account!.id, displayId);
   if (!conversation) error(404, "Conversation not found");
 
-  const [msgs, contact, conversationLabels, previousConversations] = await Promise.all([
+  const [msgs, contact, conversationLabels, previousConversations, attrDefs] = await Promise.all([
     getConversationMessages(locals.account!.id, conversation.id),
     getContact(locals.account!.id, conversation.contactId),
     getLabelsForConversation(locals.account!.id, conversation.id),
     getContactConversations(locals.account!.id, conversation.contactId),
+    db.select().from(customAttributeDefinitions).where(eq(customAttributeDefinitions.accountId, locals.account!.id)),
   ]);
 
   return {
@@ -36,6 +38,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     contact,
     conversationLabels,
     previousConversations,
+    conversationAttrDefs: attrDefs.filter((d) => d.attributeModel === "conversation"),
+    contactAttrDefs: attrDefs.filter((d) => d.attributeModel === "contact"),
   };
 };
 

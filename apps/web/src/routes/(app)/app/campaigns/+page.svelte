@@ -1,45 +1,28 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import { page } from "$app/stores";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   let showForm = $state(false);
-  let activeTab = $state<"ongoing" | "one_off">("ongoing");
 
+  const activeType = $derived($page.url.searchParams.get("type") ?? null);
   const filtered = $derived(
-    data.campaigns.filter((c) => c.campaignType === activeTab),
+    activeType ? data.campaigns.filter((c) => c.campaignType === activeType) : data.campaigns,
   );
 </script>
 
-<div class="h-full overflow-y-auto bg-white">
-  <div class="mx-auto max-w-3xl p-6">
+<div class="h-full overflow-y-auto bg-white dark:bg-gray-950">
+  <div class="max-w-6xl p-6">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-lg font-semibold text-gray-900">Campaigns</h2>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+        {activeType === "ongoing" ? "Ongoing" : activeType === "one_off" ? "One-off" : "All"} Campaigns
+      </h2>
       <button
         onclick={() => showForm = !showForm}
         class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
       >
         {showForm ? "Cancel" : "Create Campaign"}
-      </button>
-    </div>
-
-    <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6">
-      <button
-        onclick={() => activeTab = "ongoing"}
-        class="border-b-2 px-4 py-2 text-sm font-medium {activeTab === 'ongoing'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        Ongoing
-      </button>
-      <button
-        onclick={() => activeTab = "one_off"}
-        class="border-b-2 px-4 py-2 text-sm font-medium {activeTab === 'one_off'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700'}"
-      >
-        One-off
       </button>
     </div>
 
@@ -112,8 +95,8 @@
       {/each}
 
       {#if filtered.length === 0}
-        <p class="text-center text-sm text-gray-400 py-8">
-          No {activeTab === "ongoing" ? "ongoing" : "one-off"} campaigns yet
+        <p class="text-center text-sm text-gray-400 dark:text-gray-500 py-8">
+          No {activeType === "ongoing" ? "ongoing" : activeType === "one_off" ? "one-off" : ""} campaigns yet
         </p>
       {/if}
     </div>

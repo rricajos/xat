@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import type { PageServerLoad, Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { db } from "@xat/db";
-import { inboxes } from "@xat/db/schema";
+import { inboxes, channelEmail } from "@xat/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -19,7 +19,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   if (!inbox) error(404, "Inbox not found");
 
-  return { inbox };
+  let emailChannel = null;
+  if (inbox.channelType === "Channel::Email" && inbox.channelId) {
+    const [ch] = await db
+      .select({ id: channelEmail.id, emailSignature: channelEmail.emailSignature })
+      .from(channelEmail)
+      .where(eq(channelEmail.id, inbox.channelId))
+      .limit(1);
+    emailChannel = ch ?? null;
+  }
+
+  return { inbox, emailChannel };
 };
 
 export const actions: Actions = {
@@ -68,5 +78,26 @@ export const actions: Actions = {
       );
 
     return { success: true };
+  },
+
+  updateSignature: async ({ request, locals, params }) => {
+    const inboxId = parseInt(params.id);
+    const formData = await request.formData();
+    const emailSignature = (formData.get("emailSignature") as string ?? "").trim() || null;
+
+    const [inbox] = await db
+      .select({ channelId: inboxes.channelId })
+      .from(inboxes)
+      .where(and(eq(inboxes.id, inboxId), eq(inboxes.accountId, locals.account!.id)))
+      .limit(1);
+
+    if (!inbox?.channelId) return fail(404, { signatureError: "Email channel not found" });
+
+    await db
+      .update(channelEmail)
+      .set({ emailSignature, updatedAt: new Date() })
+      .where(eq(channelEmail.id, inbox.channelId));
+
+    return { signatureSuccess: true };
   },
 };

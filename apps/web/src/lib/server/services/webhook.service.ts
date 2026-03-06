@@ -1,6 +1,7 @@
 import { db } from "@xat/db";
 import { webhooks } from "@xat/db/schema";
 import { eq, and } from "drizzle-orm";
+import { createHmac, randomBytes } from "node:crypto";
 
 export async function listWebhooks(accountId: number) {
   return db
@@ -14,12 +15,15 @@ export async function createWebhook(params: {
   url: string;
   subscriptions?: string[];
 }) {
+  const hmacToken = randomBytes(32).toString("hex");
+
   const [webhook] = await db
     .insert(webhooks)
     .values({
       accountId: params.accountId,
       url: params.url,
       subscriptions: params.subscriptions ?? [],
+      hmacToken,
     })
     .returning();
 
@@ -32,6 +36,10 @@ export async function deleteWebhook(accountId: number, webhookId: number) {
     .where(
       and(eq(webhooks.id, webhookId), eq(webhooks.accountId, accountId)),
     );
+}
+
+function generateHmacSignature(payload: string, secret: string): string {
+  return createHmac("sha256", secret).update(payload).digest("hex");
 }
 
 export async function deliverWebhook(
@@ -50,16 +58,30 @@ export async function deliverWebhook(
     const subs = webhook.subscriptions as string[];
     if (subs.length > 0 && !subs.includes(event)) continue;
 
-    // Fire and forget — in production this would go through BullMQ
+    const payload = JSON.stringify({
+      event,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Xat-Event": event,
+    };
+
+    if (webhook.hmacToken) {
+      headers["X-Xat-Signature"] = generateHmacSignature(
+        payload,
+        webhook.hmacToken,
+      );
+    }
+
     fetch(webhook.url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Xat-Event": event,
-      },
-      body: JSON.stringify({ event, data, timestamp: new Date().toISOString() }),
+      headers,
+      body: payload,
     }).catch(() => {
-      // Failed delivery — would be retried in production
+      // Failed delivery — would be retried in production via BullMQ
     });
   }
 }

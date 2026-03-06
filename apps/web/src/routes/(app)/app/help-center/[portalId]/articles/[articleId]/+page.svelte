@@ -6,7 +6,7 @@
 </script>
 
 <div class="h-full overflow-y-auto bg-white dark:bg-gray-900">
-  <div class="mx-auto max-w-3xl p-6">
+  <div class="max-w-6xl p-6">
     <a
       href="/app/help-center/{data.portalId}"
       class="text-sm text-blue-600 hover:text-blue-700"

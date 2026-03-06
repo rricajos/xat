@@ -57,18 +57,18 @@
   {/if}
 
   <table class="w-full">
-    <thead class="bg-gray-50 dark:bg-gray-800">
+    <thead class="bg-gray-50 dark:bg-gray-800/50">
       <tr>
-        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Visibility</th>
-        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Actions</th>
-        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
-        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500"></th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Name</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Visibility</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Actions</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">Created</th>
+        <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400"></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
       {#each data.macros as macro}
-        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
           <td class="px-4 py-3 text-sm font-medium">
             <a
               href="/app/settings/macros/{macro.id}"
